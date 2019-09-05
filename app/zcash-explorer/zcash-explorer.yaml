@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zcash-explorer
+#  namespace: testnet
+  labels:
+    app: zcash-explorer
+spec:
+  ports:
+    - name: zcash-ui
+      nodePort: 30857
+      port: 3001
+      targetPort: 3001
+  selector:
+    app: zcash-explorer
+    version: v0.1
+    tier: frontend
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zcash-explorer
+#  namespace: testnet
+  labels:
+    app: zcash-explorer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zcash-explorer
+      version: v0.1
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: zcash-explorer
+        version: v0.1
+        tier: frontend
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: zcash-explorer
+          image: alphegasolutions/zcash-explorer:v0.1
+          imagePullPolicy: Never
+          env:
+            - name: ZCASH_HOME
+              value: /home/zcash
+            - name: ZCASH_NETWORK
+              value: testnet
+            - name: ZCASH_RPC_HOST
+              value: zcashd
+            - name: ZCASH_RPC_PORT
+              value: "18232"
+            - name: ZCASH_RPC_USER
+              value: zcash
+            - name: ZCASH_RPC_PASS
+              value: password
+            - name: ZMQ_BLK_ADDR
+              value: zcashd:9994
+            - name: ZMQ_LWD_ADDR
+              value: zcashd:28332
+          ports:
+            - name: zcash-explorer
+              containerPort: 3001
+              protocol: TCP
+          securityContext:
+            allowPrivilegeEscalation: false

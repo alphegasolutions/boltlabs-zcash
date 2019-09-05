@@ -1,0 +1,96 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: zcashd-data-pv
+  namespace: testnet
+spec:
+  storageClassName: aws-efs
+  capacity:
+    storage: 1G
+  accessModes:
+    - ReadWriteMany
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zcashd-service
+  namespace: zcashd-testnet
+spec:
+  ports:
+    - name: zcashd-rpc
+      port: 18232
+      targetPort: 18232
+    - name: zcashd-zmq
+      port: 28332
+      targetPort: 28332
+    - name: zcashd-1wd
+      port: 9994
+      targetPort: 9994
+  selector:
+    app: zcashd
+    tier: crypto-node
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zcashd
+  namespace: zcashd-testnet
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: zcashd
+        tier: crypto-node
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers: 
+        - name: zcashd          
+          image: 645036907814.dkr.ecr.us-east-1.amazonaws.com/zcashd:v2.0.7
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ZCASH_HOME
+              value: /home/zcash
+            - name: ZCASH_CONF
+              value: /home/zcash/.zcash/zcash.conf
+            - name: ZCASH_NETWORK
+              value: testnet
+            - name: ZCASH_NODE_TYPE
+              value: node
+            - name: ZCASH_USER
+              value: zcash
+            - name: ZCASH_PASS
+              value: password
+            - name: ZCASH_RPC_USER
+              value: zcash
+            - name: ZCASH_RPC_PASS
+              value: password
+            - name: ZCASH_NODE_TYPE
+              value: PEER
+          ports:
+            - name: zcashd-rpc
+              containerPort: 18232
+              protocol: TCP
+            - name: zcashd-zmq
+              containerPort: 28332
+              protocol: TCP
+            - name: zcashd-lwd
+              containerPort: 9994
+              protocol: TCP
+          volumeMounts:
+            - name: zcash-data
+              mountPath: /home/zcash/.zcash
+            - name: zcash-params
+              mountPath: /home/zcash/.zcash-params
+          securityContext:
+            allowPrivilegeEscalation: false            
+      volumes:
+        - name: zcash-data
+          persistentVolumeClaim:
+            claimName: efs
+        - name: zcash-params
+          persistentVolumeClaim:
+            claimName: efs

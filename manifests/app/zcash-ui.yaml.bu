@@ -1,0 +1,88 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ui-ingress
+  namespace: testnet
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+  labels:
+    app: ui-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: zcash-ui-service
+              servicePort: 3001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zcash-ui-service
+  namespace: testnet
+spec:
+  ports:
+    - name: zcash-ui
+      port: 3001
+      targetPort: 3001
+  type: NodePort
+  selector:
+    app: zcash-ui
+    tier: frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zcash-ui
+  namespace: testnet
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: zcash-ui
+        tier: frontend
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: zcash-ui
+          image: 645036907814.dkr.ecr.us-east-1.amazonaws.com/zcash-ui:v0.1
+          imagePullPolicy: Never
+          env:
+            - name: ZCASH_HOME
+              value: /home/zcash
+            - name: ZCASH_NETWORK
+              value: testnet
+            - name: ZCASH_SERVICE
+              value: zcashd
+            - name: ZCASH_RPC_PORT
+              value: "18232"
+            - name: ZCASH_RPC_USER
+              value: zcash
+            - name: ZCASH_RPC_PASS
+              value: password
+            - name: ZMQ_BLK_PORT
+              value: "9994"
+            - name: ZMQ_LWD_PORT
+              value: "28332"
+          ports:
+            - name: zcash-ui-port
+              containerPort: 3001
+              protocol: TCP
+          volumeMounts:
+            - name: zcash-ui-data
+              mountPath: /home/zcash/.zcash
+          securityContext:
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: zcash-ui-data
+          persistentVolumeClaim:
+            claimName: efs
+        - name: zcash-ui-params
+          persistentVolumeClaim:
+            claimName: efs

@@ -1,0 +1,49 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - curl -sS -o aws-iam-authenticator https://amazon-eks.s3-us-west-2.amazonaws.com/1.11.5/2018-12-06/bin/linux/amd64/aws-iam-authenticator
+      - curl -sS -o kubectl https://amazon-eks.s3-us-west-2.amazonaws.com/1.11.5/2018-12-06/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl ./aws-iam-authenticator
+      - export PATH=$PWD/:$PATH
+      - apt-get update && apt-get -y install jq python3-pip python3-dev && pip3 install --upgrade awscli
+  
+  pre_build:
+    commands:
+      - source bin/setenv.sh
+      - $(aws ecr get-login --no-include-email)
+      - ZCASH_TAG=
+
+      - sed -i 's@CONTAINER_IMAGE@'"$REPOSITORY_URI/zcashd:latest"'@' manifests/zcashd.yaml
+      - sed -i 's@CONTAINER_IMAGE@'"$REPOSITORY_URI/zcash-ui:latest"'@' manifests/zcash-ui.yaml
+      - sed -i 's@CONTAINER_IMAGE@'"$REPOSITORY_URI/zcash-lwd:latest"'@' manifests/zcash-lwd.yaml
+      - export KUBECONFIG=$HOME/.kube/config
+  
+  build:
+    commands:
+      - echo Build started on `date`
+      - bin/build_image.sh zcashd
+      - bin/build_image.sh zcash-ui
+      - bin/build_image.sh zcash-lwd
+  
+  post_build:
+    commands:
+      - bin/push_image.sh zcashd
+      - bin/push_image.sh zcash-ui
+      - bin/push_image.sh zcash-lwd
+      - CREDENTIALS=$(aws sts assume-role --role-arn $EKS_KUBECTL_ROLE_ARN --role-session-name codebuild-kubectl --duration-seconds 900)
+      - export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
+      - export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
+      - export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
+      - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
+      - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+      - bin/deploy.sh zcashd
+      - printf '[{"name":"zcashd","imageUri":"%s"}]' $REPOSITORY_URI:zcashd:latest > build.json
+      - bin/deploy.sh zcash-ui
+      - printf '[{"name":"zcash-ui","imageUri":"%s"}]' $REPOSITORY_URI:zcash-ui:latest >> build.json
+      - bin/deploy.sh zcash-lwd
+      - printf '[{"name":"zcash-lwd","imageUri":"%s"}]' $REPOSITORY_URI:zcash-lwd:latest >> build.json
+  artificacts:
+    files: build.json  
+ 

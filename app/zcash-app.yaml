@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zcashd
+  labels:
+    app: zcashd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zcashd
+      version: v2.0.5
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: zcashd
+        version: v2.0.5
+        tier: backend
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers: 
+        - name: zcashd
+          image: zcashd:v2.0.6
+          imagePullPolicy: Never
+          env:
+            - name: ZCASH_HOME
+              value: /home/zcash
+            - name: ZCASH_CONF
+              value: /home/zcash/.zcash/zcash.conf
+            - name: ZCASH_NETWORK
+              value: testnet
+          ports:
+            - containerPort: 18232
+              name: zcashd-rpc
+            - containerPort: 28332
+              name: zcashd-zmq
+            - containerPort: 9994
+              name: zcashd-1
+          securityContext:
+            allowPrivilegeEscalation: false

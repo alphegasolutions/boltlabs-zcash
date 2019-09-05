@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: zcashd
+#  namespace: testnet
+  labels:
+    app: zcashd
+spec:
+  ports:
+    - name: zcashd-rpc
+      port: 18232
+      targetPort: 18232
+    - name: zcashd-zmq
+      port: 28332
+      targetPort: 28332
+    - name: zcashd-1
+      port: 9994
+      targetPort: 9994
+  selector:
+    app: zcashd
+    version: v2.0.6
+    tier: backend

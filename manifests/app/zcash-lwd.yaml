@@ -1,0 +1,159 @@
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: lwd-data-pv
+spec:
+  storageClassName: aws-efs
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 3G
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: lwd-ingress
+  namespace: zcashd-testnet
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internal
+  labels:
+    app: lwd-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: lwd-service
+              servicePort: 9067
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lwd-service
+  namespace: zcashd-testnet
+spec:
+  ports:
+    - name: zcash-lwd
+      port: 9067
+      targetPort: 9067
+      protocol: TCP
+  type: NodePort
+  selector:
+    app: lwd-rest
+    tier: midtier
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lwd-ing
+  namespace: zcashd-testnet
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: lwd-ing
+        tier: midtier
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: lwd-ing
+          image: 645036907814.dkr.ecr.us-east-1.amazonaws.com/zcash-lwd:v0.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ZCASH_HOME
+              value: /home/zcash
+            - name: ZCASH_CONF
+              value: /home/zcash/.zcash/zcash.conf
+            - name: LWD_DB
+              value: /home/zcash/db/testnet-lite.sqlite
+            - name: ZMQ_LWD_ADDR
+              value: zcashd:28332
+            - name: ZMQ_BLK_ADDR
+              value: zcashd:9994
+            - name: ZCASH_RPC_HOST
+              value: zcashd
+            - name: ZCASH_RPC_PORT
+              value: "18232"
+            - name: ZCASH_RPC_USER
+              value: zcash
+            - name: ZCASH_RPC_PASS
+              value: password
+            - name: LWD_PORT
+              value: "9067"
+            - name: LWD_TYPE
+              value: ingester
+          volumeMounts:
+            - name: lwd-ing-data
+              mountPath: /home/zcash/db
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: lwd-ing-data
+          persistentVolumeClaim:
+            claimName: lwd-data-pv
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lwd-rest
+  namespace: zcashd-testnet
+spec:
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: lwd-rest
+        tier: midtier
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: lwd-rest
+          image: 645036907814.dkr.ecr.us-east-1.amazonaws.com/zcash-lwd:v0.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: ZCASH_HOME
+              value: /home/zcash
+            - name: ZCASH_CONF
+              value: /home/zcash/.zcash/zcash.conf
+            - name: LWD_DB
+              value: /home/zcash/db/testnet-lite.sqlite
+            - name: ZMQ_LWD_ADDR
+              value: zcashd:28332
+            - name: ZMQ_BLK_ADDR
+              value: zcashd:9994
+            - name: ZCASH_RPC_HOST
+              value: zcashd
+            - name: ZCASH_RPC_PORT
+              value: "18232"
+            - name: ZCASH_RPC_USER
+              value: zcash
+            - name: ZCASH_RPC_PASS
+              value: password
+            - name: LWD_PORT
+              value: "9067"
+            - name: LWD_TYPE
+              value: rest
+          ports:
+            - containerPort: 9067
+              name: lwd-port
+          volumeMounts:
+            - name: lwd-rest-data
+              mountPath: /home/zcash/db
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: lwd-rest-data
+          persistentVolumeClaim:
+            claimName: lwd-data-pv

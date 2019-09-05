@@ -1,0 +1,197 @@
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: lwd-ing-data-pv
+spec:
+  storageClassName: manual-ing
+  capacity:
+    storage: 1G
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/tmp/lwd"
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: lwd-rest-data-pv
+spec:
+  storageClassName: manual-rest
+  capacity:
+    storage: 1G
+  accessModes:
+    - ReadOnlyMany
+  hostPath:
+    path: "/tmp/lwd"
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: lwd-ing-data
+spec:
+  storageClassName: manual-ing
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1G
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: lwd-rest-data
+spec:
+  storageClassName: manual-rest
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 1G
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zcash-lwd
+#  namespace: testnet
+  labels:
+    app: zcash-lwd
+spec:
+  ports:
+    - name: zcash-lwd
+      port: 9067
+      targetPort: 9067
+      nodePort: 30967
+  selector:
+    app: zcash-lwd-rest
+    version: v0.1
+    tier: midtier
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zcash-lwd-ing
+#  namespace: testnet
+  labels:
+    app: zcash-lwd-ing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: zcash-lwd-ing
+      version: v0.1
+      tier: midtier
+  template:
+    metadata:
+      labels:
+        app: zcash-lwd-ing
+        version: v0.1
+        tier: midtier
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: zcash-lwd-ing
+          image: alphegasolutions/zcash-lwd:v0.1
+          env:
+            - name: ZCASH_HOME
+              value: /home/zcash
+            - name: ZCASH_CONF
+              value: /home/zcash/.zcash/zcash.conf
+            - name: LWD_DB
+              value: /home/zcash/db/testnet-lite.sqlite
+            - name: ZMQ_LWD_ADDR
+              value: zcashd:28332
+            - name: ZMQ_BLK_ADDR
+              value: zcashd:9994
+            - name: ZCASH_RPC_HOST
+              value: zcashd
+            - name: ZCASH_RPC_PORT
+              value: "18232"
+            - name: ZCASH_RPC_USER
+              value: zcash
+            - name: ZCASH_RPC_PASS
+              value: password
+            - name: LWD_PORT
+              value: "9067"
+            - name: LWD_TYPE
+              value: ingester
+          volumeMounts:
+            - name: lwd-ing-data
+              mountPath: /home/zcash/db
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: lwd-ing-data
+          persistentVolumeClaim:
+            claimName: lwd-ing-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zcash-lwd-rest
+#  namespace: testnet
+  labels:
+    app: zcash-lwd-rest
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: zcash-lwd-rest
+      version: v0.1
+      tier: midtier
+  template:
+    metadata:
+      labels:
+        app: zcash-lwd-rest
+        version: v0.1
+        tier: midtier
+    spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: zcash-lwd-rest
+          image: alphegasolutions/zcash-lwd:v0.1
+          env:
+            - name: ZCASH_HOME
+              value: /home/zcash
+            - name: ZCASH_CONF
+              value: /home/zcash/.zcash/zcash.conf
+            - name: LWD_DB
+              value: /home/zcash/db/testnet-lite.sqlite
+            - name: ZMQ_LWD_ADDR
+              value: zcashd:28332
+            - name: ZMQ_BLK_ADDR
+              value: zcashd:9994
+            - name: ZCASH_RPC_HOST
+              value: zcashd
+            - name: ZCASH_RPC_PORT
+              value: "18232"
+            - name: ZCASH_RPC_USER
+              value: zcash
+            - name: ZCASH_RPC_PASS
+              value: password
+            - name: LWD_PORT
+              value: "9067"
+            - name: LWD_TYPE
+              value: rest
+          ports:
+            - containerPort: 9067
+              name: lwd-port
+          volumeMounts:
+            - name: lwd-rest-data
+              mountPath: /home/zcash/db
+          securityContext:
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+      volumes:
+        - name: lwd-rest-data
+          persistentVolumeClaim:
+            claimName: lwd-rest-data
+
+            

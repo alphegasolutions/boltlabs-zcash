@@ -1,0 +1,30 @@
+{
+  "network": "$ZCASH_NETWORK",
+  "port": 3001,
+  "services": [
+    "bitcoind",
+    "web"
+  ],
+  "servicesConfig": {
+    "bitcoind": {
+      "connect": [
+        {
+	  "rpchost": "$ZCASH_RPC_HOST",
+	  "rpcport": "$ZCASH_RPC_PORT",
+          "rpcuser": "$ZCASH_RPC_USER",
+          "rpcpassword": "$ZCASH_RPC_PASS",
+          "zmqpubrawtx": "tcp://$ZMQ_BLK_ADDR",
+          "zmqpubhashblock": "tcp://$ZMQ_BLK_ADDR",
+          "zmqpubcheckedblock": "tcp://$ZMQ_LWD_ADDR"
+        }
+      ]
+    },
+    "insight-api-zcash": {
+      "routePrefix": "api"
+    },
+    "insight-ui-zcash": {
+      "apiPrefix": "api",
+      "routePrefix": ""
+    }
+  }
+}

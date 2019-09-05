@@ -1,0 +1,6 @@
+ind: StorageClass
+apiVersion: storage.k8.io/v1
+metadata:
+  name: localstorage
+provisioner: docker.io/hostpath
+reclaimPolicy: Retain

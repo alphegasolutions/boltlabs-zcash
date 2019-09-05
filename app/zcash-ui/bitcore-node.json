@@ -1,0 +1,24 @@
+{
+  "network": "$ZCASH_NETWORK",
+  "port": 3001,
+  "services": [
+    "bitcoind",
+    "web"
+  ],
+  "servicesConfig": {
+    "bitcoind": {
+      "spawn":
+        {
+        	"datadir": "/home/zcash/.zcash",
+        	"exec": "/home/zcash/zcash-patched-for-explorer/src/zcashd"
+        }
+    },
+    "insight-api-zcash": {
+      "routePrefix": "api"
+    },
+    "insight-ui-zcash": {
+      "apiPrefix": "api",
+      "routePrefix": ""
+    }
+  }
+}
