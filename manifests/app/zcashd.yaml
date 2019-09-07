@@ -88,6 +88,8 @@ spec:
               value: "9994"
             - name: ZCASH_ZMQ2_PORT
               value: "28332"
+            - name: ENABLE_INSIGHT_EXPLORER
+              value: true
           ports:
             - name: zcashd-rpc
               containerPort: 18232

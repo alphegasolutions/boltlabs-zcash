@@ -42,6 +42,12 @@ function create_conf_file() {
     echo "addressindex=1" >> ${ZCASH_CONF}
     echo "timestampindex=1" >> ${ZCASH_CONF}
     echo "spentindex=1" >> ${ZCASH_CONF}
+    
+    if [ $ENABLE_INSIGHT_EXPLORER == "true" ]
+    then
+       echo "experimentalfeatures=1" >> ${ZCASH_CONF}
+       echo "insightexplorer=1" >> ${ZCASH_CONF}
+    fi
 
 }
 
