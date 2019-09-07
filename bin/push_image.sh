@@ -4,50 +4,55 @@
 APP=$1
 
 curr_dir=$PWD
-VERSION=$(< app/$APP/version.txt)
 
-if [ -z $DOCKER_REPO ]
-then
-  DOCKER_REPO=localhost:3200
-fi
+if [ $APP == "zcashd" ] || [ $APP == "zcashd-ui" ] || [ $APP == "zcashd-ui2" ] || [ $APP == "zcashd-lwd" ]; then
 
-if [ -z $IMAGE_PREFIX ]; then
-  IMAGE_PREFIX=boltlabs
-fi
+	VERSION=$(< app/$APP/version.txt)
+	echo "APP=$APP. VERSION=$VERSION"
 
-
-#EKS_KUBECTL_ROLE_ARN=$(aws iam get-role --role-name BoltlabsEKSClusterAdminRole | jq ".Role.Arn" | tr -d '"')
-#AWS_ACCOUNT_ID=$(aws sts get-caller-identity | jq ".Account" | tr -d '"')
-#AWS_REGION=$(aws configure get region)
-#REPOSITORY_URI=$AWS_ACCOUNT_ID.ecr.$AWS_REGION.amazonaws.com
-
-
-echo "APP=$APP. VERSION=$VERSION"
-
-if [ $APP == "zcashd" ]; then
-   
-	echo $REPOSITORY_URI/zcash-explorer:$VERSION
+	APP_IMAGE=${PROJECT}/${APP}:${VERSION}
+	APP_TAG=${REPOSITORY_URI}/${APP}:${VERSION}
 	
-	docker push $REPOSITORY_URI/$APP:$VERSION
-#	docker push $DOCKER_REPO/$APP:latest
-      
-elif [ $APP == "zcash-explorer" ]; then
-
-	echo $REPOSITORY_URI/zcash-explorer:$VERSION
-
-	docker push $REPOSITORY_URI/$APP:$VERSION
-#	docker push $DOCKER_REPO/$APP:latest
-
-elif [ $APP == "zcash-ui" ]; then
-
-	echo $DOCKER_REPO/$APP:$VERSION
-	docker push $REPOSITORY_URI/$APP:$VERSION
-#	docker push $DOCKER_REPO/$APP:latest
-
-elif [ $APP == "zcash-lwd" ]; then
-
-	echo $REPOSITORY_URI/zcash-lwd:$VERSION
-
-	docker push $REPOSITORY_URI/$APP:$VERSION
-#	docker push $DOCKER_REPO/$APP:latest
+	docker tag ${APP_IMAGE} ${APP_TAG}
+	docker push ${APP_TAG}
+#	docker rmi ${APP_TAG}
+else
+	echo "Unknown application => $APP"
 fi
+
+#docker tag $IMAGE $REPOSITORY_URI/$APP:latest
+
+
+#if [ $APP == "zcashd" ]; then
+#   
+#	echo $IMAGE
+#	
+#	docker tag $IMAGE $REPOSITORY_URI/zcash-lwd:latest
+#
+#	docker push $IMAGE:$VERSION
+#	docker push $IMAGE:latest
+      
+#elif [ $APP == "zcashd-ui" ]; then
+
+#	IMAGE=${PROJECT}/$APP
+#	echo $IMAGE
+	
+#	docker push $IMAGE:$VERSION
+#	docker push $IMAGE:latest
+
+#elif [ $APP == "zcashd-ui2" ]; then
+
+#	IMAGE=$REPOSITORY_URI/$APP
+#	echo $IMAGE
+	
+#	docker push $IMAGE:$VERSION
+#	docker push $IMAGE:latest
+
+#elif [ $APP == "zcashd-lwd" ]; then
+
+#	IMAGE=$REPOSITORY_URI/$APP
+#	echo $IMAGE
+	
+#	docker push $IMAGE:$VERSION
+#	docker push $IMAGE:latest
+#fi

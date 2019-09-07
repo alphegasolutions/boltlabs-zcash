@@ -1,6 +1,6 @@
-ARG DOCKER_REPO=alphegasolutions
-ARG ZCASH_VERSION=v2.0.6
-FROM $DOCKER_REPO/zcashd:$ZCASH_VERSION AS builder
+ARG REPOSITORY_URI=boltlabs
+ARG ZCASH_VERSION=latest
+FROM $REPOSITORY_URI/zcashd:$ZCASH_VERSION AS builder
 
 FROM golang:1.11
 
@@ -9,7 +9,7 @@ ENV TMPDIR=/home/zcash/go/tmp
 
 RUN apt-get update
 
-RUN apt-get install -y sudo libgomp1 wget curl libzmq3-dev git less
+RUN apt-get install -y sudo libgomp1 wget curl libzmq3-dev git less nano vim
 
 RUN apt-get clean all -y
 

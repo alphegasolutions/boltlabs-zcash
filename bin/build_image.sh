@@ -6,15 +6,6 @@ APP=$1
 curr_dir=$PWD
 VERSION=$(< app/$APP/version.txt)
 
-if [ -z $DOCKER_REPO ]
-then
-  DOCKER_REPO=alphegasolutions
-fi
-
-if [ -z $IMAGE_PREFIX ]; then
-  IMAGE_PREFIX=boltlabs
-fi
-
 
 #EKS_KUBECTL_ROLE_ARN=$(aws iam get-role --role-name BoltlabsEKSClusterAdminRole | jq ".Role.Arn" | tr -d '"')
 #AWS_ACCOUNT_ID=$(aws sts get-caller-identity | jq ".Account" | tr -d '"')
@@ -41,12 +32,16 @@ if [ $APP == "zcashd" ]; then
   	git checkout $VERSION
 	cd ..
 
-	echo $IMAGE_PREFIX/zcash-explorer:$VERSION
-#	docker build -t $IMAGE_PREFIX/zcashd:$VERSION --memory-swap -1 .
-	docker image build --tag $REPOSITORY_URI/zcashd:$VERSION --memory-swap -1 .
+	IMAGE=${PROJECT}/$APP:$VERSION
+	echo "Building $IMAGE"
+
+	docker image build --tag $IMAGE --memory-swap -1 .
+	#docker tag $IMAGE $REPOSITORY_URI/zcashd:latest
 
       
-elif [ $APP == "zcash-explorer" ]; then
+elif [ $APP == "zcashd-ui" ]; then
+
+	ZCASHD_TAG=$(< app/zcashd/version.txt)
 
    	mkdir -p target/$APP
    	cd target/$APP
@@ -57,11 +52,13 @@ elif [ $APP == "zcash-explorer" ]; then
    	cp $curr_dir/app/$APP/entrypoint.sh .
 	cp $curr_dir/app/$APP/bitcore-node.json .
 
-	echo $IMAGE_PREFIX/zcash-explorer:$VERSION
-#	docker build -t $IMAGE_PREFIX/zcash-explorer:$VERSION --memory-swap -1 .	
-	docker image build --tag $REPOSITORY_URI/zcash-explorer:$VERSION --memory-swap -1 .
+	IMAGE=${PROJECT}/$APP:$VERSION
+	echo "Building $IMAGE from base ${PROJECT}/zcashd:$ZCASHD_TAG"
 
-elif [ $APP == "zcash-ui" ]; then
+	docker image build --build-arg REPOSITORY_URI=${PROJECT} --build-arg ZCASH_VERSION=$ZCASHD_TAG --tag $IMAGE --memory-swap -1 .
+	#docker tag $IMAGE $REPOSITORY_URI/zcash-ui:latest
+
+elif [ $APP == "zcashd-ui2" ]; then
 
    	mkdir -p target/$APP
    	cd target/$APP
@@ -72,13 +69,15 @@ elif [ $APP == "zcash-ui" ]; then
    	cp $curr_dir/app/$APP/entrypoint.sh .
 	cp $curr_dir/app/$APP/bitcore-node.json .
 
-	echo $IMAGE_PREFIX/$APP:$VERSION
-#	docker build -t $IMAGE_PREFIX/$APP:$VERSION --memory-swap -1 .	
+	IMAGE=${PROJECT}/$APP:$VERSION
+	echo "Building $IMAGE"
 
-	docker image build --tag $REPOSITORY_URI/zcash-ui:$VERSION --memory-swap -1 .
+	docker image build --tag $IMAGE --memory-swap -1 .
+	#docker tag $REPOSITORY_URI/zcash-ui2:$VERSION $REPOSITORY_URI/zcash-ui2:latest
 
-elif [ $APP == "zcash-lwd" ]; then
+elif [ $APP == "zcashd-lwd" ]; then
 
+	ZCASHD_TAG=$(< app/zcashd/version.txt)
 
    	mkdir -p target/$APP
    	cd target/$APP
@@ -99,9 +98,10 @@ elif [ $APP == "zcash-lwd" ]; then
 #	git checkout $VERSION	
 #	cd ..
 	
-	echo $IMAGE_PREFIX/zcash-lwd:$VERSION
-	#docker build -t $IMAGE_PREFIX/zcash-lwd:$VERSION --memory-swap -1 .	
+	IMAGE=${PROJECT}/$APP:$VERSION
+	echo "Building $IMAGE from base $REPOSITORY_URI/zcashd:$ZCASHD_TAG"
  
- 	docker image build --tag $REPOSITORY_URI/zcash-lwd:$VERSION --memory-swap -1 .
+ 	docker image build --build-arg REPOSITORY_URI=${PROJECT} --build-arg ZCASH_VERSION=$ZCASHD_TAG --tag $IMAGE --memory-swap -1 .
+	#docker tag $IMAGE $REPOSITORY_URI/zcash-lwd:latest
    
 fi

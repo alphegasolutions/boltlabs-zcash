@@ -4,53 +4,61 @@ CMD=$1
 
 curr_dir=$PWD
 
-if [ -z $DOCKER_REPO ]
+if [ -z $REPOSITORY_URI ]
 then
-  DOCKER_REPO=localhost:3200
+  export REPOSITORY_URI=boltlabs
 fi
 
-#$(aws ecr get-login --no-include-email)
+if [ -z ${PROJECT} ]; then
+  export PROJECT=boltlabs
+fi
 
 #EKS_KUBECTL_ROLE_ARN=$(aws iam get-role --role-name BoltlabsEKSClusterAdminRole | jq ".Role.Arn" | tr -d '"')
 #AWS_ACCOUNT_ID=$(aws sts get-caller-identity | jq ".Account" | tr -d '"')
 #AWS_REGION=$(aws configure get region)
 #REPOSITORY_URI=$AWS_ACCOUNT_ID.ecr.$AWS_REGION.amazonaws.com
 
-echo "EKS KUBECTL ROLE: ${EKS_KUBECTL_ROLE_ARN}"
-echo "AWS ACCOUNT ID: ${AWS_ACCOUNT_ID}"
-echo "ZCASHD: $REPOSITORY_URI/zcashd:${ZCASHD_TAG}"
+#echo "EKS KUBECTL ROLE: ${EKS_KUBECTL_ROLE_ARN}"
+#echo "AWS ACCOUNT ID: ${AWS_ACCOUNT_ID}"
+#echo "ZCASHD: $REPOSITORY_URI/zcashd:${ZCASHD_TAG}"
 #echo "ZCASH-UI: $REPOSITORY_URI/zcashd:${ZCASH_UI_TAG}"
 #echo "ZCASH-LWD: $REPOSITORY_URI/zcashd:${ZCASH_LWD_TAG}"
 
+echo "Repository => ${REPOSITORY_URI}"
 if [ -z $CMD ]; then
 	echo "No command provided!"
 	
 elif [ $CMD == "build" ]; then
+
+#	echo "Starting docker build for zcashd"	
+#	time bin/build_image.sh zcashd
 	
-#	bin/build_image.sh zcashd
-#	bin/build_image.sh zcash-ui
-	bin/build_image.sh zcash-lwd
+#	echo "Starting docker build for zcash-ui"
+#	time bin/build_image.sh zcashd-ui
+	
+	echo "Starting docker build for zcash-lwd"
+	time bin/build_image.sh zcashd-lwd
 
 elif [ $CMD == "push" ]; then
 
-	bin/push_image.sh zcashd
-#	bin/push_image.sh zcash-ui
-#	bin/push_image.sh zcash-lwd
+#	bin/push_image.sh zcashd
+#	bin/push_image.sh zcashd-ui
+	bin/push_image.sh zcashd-lwd
 
 elif [ $CMD == "deploy" ]; then
 
-#	ZCASHD_TAG=$(< app/zcashd/version.txt)
-	#ZCASH_UI_TAG=$(< app/zcash-ui/version.txt)
-	#ZCASH_LWD_TAG=$(< app/zcash-lwd/version.txt)
+	if [ -z $NAMESPACE ]; then 
+		NAMESPACE=zc-testnet
+	fi
 
-#  	sed -i.bu 's/testnet = false/testnet = true/g' manifests/app/zcashd.yaml
+	cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${NAMESPACE}	
+EOF
 
-#	sed -i '/image/c\image: $REPOSITORY_URI/zcashd:$ZCASHD_TAG' manifests/app/zcashd.yaml
-	
-#    sed -i 's@CONTAINER_IMAGE@'"$REPOSITORY_URI/zcash-ui:$ZCASH_UI_TAG"'@' manifests/zcash-ui.yaml
-#    sed -i 's@CONTAINER_IMAGE@'"$REPOSITORY_URI/zcash-lwd:$ZCASH_LWD_TAG"'@' manifests/zcash-lwd.yaml
-
-	bin/deploy.sh zcashd $2
-	bin/deploy.sh zcash-ui $2
-	bin/deploy.sh zcash-lwd $2
+	bin/deploy.sh zcashd ${NAMESPACE}
+	bin/deploy.sh zcashd-ui ${NAMESPACE}
+	bin/deploy.sh zcashd-lwd ${NAMESPACE}
 fi

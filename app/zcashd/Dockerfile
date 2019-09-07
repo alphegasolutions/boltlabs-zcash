@@ -14,7 +14,7 @@ RUN apt-get -o Acquire::Check-Valid-Until=false update
 RUN apt-get -qqy install --no-install-recommends build-essential \
     automake ncurses-dev libcurl4-openssl-dev libssl-dev libgtest-dev \
     make autoconf automake libtool git apt-utils pkg-config libc6-dev \
-    libcurl3-dev libudev-dev m4 g++-multilib unzip git python zlib1g-dev \
+    libcurl3-dev libudev-dev m4 g++-multilib unzip git zlib1g-dev \
     wget ca-certificates pwgen bsdmainutils curl
 
 #Temporarily disabled for dev build

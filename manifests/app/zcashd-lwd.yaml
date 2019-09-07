@@ -1,7 +1,9 @@
+---
 kind: PersistentVolumeClaim
 apiVersion: v1
 metadata:
   name: lwd-data-pv
+  namespace: zc-testnet
 spec:
   storageClassName: aws-efs
   accessModes:
@@ -10,37 +12,40 @@ spec:
     requests:
       storage: 3G
 ---
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: lwd-ingress
-  namespace: testnet
-  annotations:
-    kubernetes.io/ingress.class: alb
-    alb.ingress.kubernetes.io/scheme: internet-facing
-  labels:
-    app: lwd-ingress
-spec:
-  rules:
-    - http:
-        paths:
-          - path: /*
-            backend:
-              serviceName: lwd-service
-              servicePort: 9067
+#apiVersion: extensions/v1beta1
+#kind: Ingress
+#metadata:
+#  name: lwd-ingress
+#  namespace: zc-testnet
+#  annotations:
+#    kubernetes.io/ingress.class: alb
+#    alb.ingress.kubernetes.io/scheme: internal
+#  labels:
+#    app: lwd-ingress
+#spec:
+#  rules:
+#    - http:
+#        paths:
+#          - path: /*
+#            backend:
+#              serviceName: lwd-service
+#              servicePort: 9067
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: lwd-service
-  namespace: testnet
+  namespace: zc-testnet
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+    service.beta.kubernetes.io/aws-load-balancer-internal: 0.0.0.0/0
 spec:
   ports:
     - name: zcash-lwd
       port: 9067
       targetPort: 9067
       protocol: TCP
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: lwd-rest
     tier: midtier
@@ -49,9 +54,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: lwd-ing
-  namespace: testnet
+  namespace: zc-testnet
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: lwd-ing
+      tier: midtier
   template:
     metadata:
       labels:
@@ -64,7 +73,8 @@ spec:
         fsGroup: 1000
       containers:
         - name: lwd-ing
-          image: 645036907814.dkr.ecr.us-east-1.amazonaws.com/zcash-lwd:v0.1
+          image: 183812568438.dkr.ecr.us-east-1.amazonaws.com/zcashd-lwd:v0.0.1
+          imagePullPolicy: IfNotPresent
           env:
             - name: ZCASH_HOME
               value: /home/zcash
@@ -73,11 +83,11 @@ spec:
             - name: LWD_DB
               value: /home/zcash/db/testnet-lite.sqlite
             - name: ZMQ_LWD_ADDR
-              value: zcashd:28332
+              value: zcashd-service:28332
             - name: ZMQ_BLK_ADDR
-              value: zcashd:9994
+              value: zcashd-service:9994
             - name: ZCASH_RPC_HOST
-              value: zcashd
+              value: zcashd-service
             - name: ZCASH_RPC_PORT
               value: "18232"
             - name: ZCASH_RPC_USER
@@ -103,9 +113,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: lwd-rest
-  namespace: testnet
+  namespace: zc-testnet
 spec:
-  replicas: 3
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lwd-rest
+      tier: midtier
   template:
     metadata:
       labels:
@@ -118,7 +132,8 @@ spec:
         fsGroup: 1000
       containers:
         - name: lwd-rest
-          image: 645036907814.dkr.ecr.us-east-1.amazonaws.com/zcash-lwd:v0.1
+          image: 183812568438.dkr.ecr.us-east-1.amazonaws.com/zcashd-lwd:v0.0.1
+          imagePullPolicy: Always
           env:
             - name: ZCASH_HOME
               value: /home/zcash
@@ -127,11 +142,11 @@ spec:
             - name: LWD_DB
               value: /home/zcash/db/testnet-lite.sqlite
             - name: ZMQ_LWD_ADDR
-              value: zcashd:28332
+              value: zcashd-service:28332
             - name: ZMQ_BLK_ADDR
-              value: zcashd:9994
+              value: zcashd-service:9994
             - name: ZCASH_RPC_HOST
-              value: zcashd
+              value: zcashd-service
             - name: ZCASH_RPC_PORT
               value: "18232"
             - name: ZCASH_RPC_USER

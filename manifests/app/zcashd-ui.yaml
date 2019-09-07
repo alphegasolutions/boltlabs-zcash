@@ -2,7 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: ui-ingress
-  namespace: testnet
+  namespace: zc-testnet
   annotations:
     kubernetes.io/ingress.class: alb
     alb.ingress.kubernetes.io/scheme: internet-facing
@@ -14,35 +14,40 @@ spec:
         paths:
           - path: /*
             backend:
-              serviceName: zcash-ui-service
-              servicePort: 3001
+              serviceName: zcashd-ui-service
+              servicePort: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: zcash-ui-service
-  namespace: testnet
+  name: zcashd-ui-service
+  namespace: zc-testnet
 spec:
   ports:
     - name: zcash-ui
-      port: 3001
+      port: 80
       targetPort: 3001
+      protocol: TCP
   type: NodePort
   selector:
-    app: zcash-ui
+    app: zcashd-ui
     tier: frontend
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: zcash-ui
-  namespace: testnet
+  name: zcashd-ui
+  namespace: zc-testnet
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      app: zcashd-ui
+      tier: frontend
   template:
     metadata:
       labels:
-        app: zcash-ui
+        app: zcashd-ui
         tier: frontend
     spec:
       securityContext:
@@ -51,38 +56,42 @@ spec:
         fsGroup: 1000
       containers:
         - name: zcash-ui
-          image: 645036907814.dkr.ecr.us-east-1.amazonaws.com/zcash-ui:v0.1
-          imagePullPolicy: Never
+          image: 183812568438.dkr.ecr.us-east-1.amazonaws.com/zcashd-ui:v0.0.1
+          imagePullPolicy: IfNotPresent
           env:
             - name: ZCASH_HOME
               value: /home/zcash
             - name: ZCASH_NETWORK
               value: testnet
-            - name: ZCASH_SERVICE
-              value: zcashd
+            - name: ZCASH_RPC_HOST
+              value: zcashd-service
             - name: ZCASH_RPC_PORT
               value: "18232"
             - name: ZCASH_RPC_USER
               value: zcash
             - name: ZCASH_RPC_PASS
               value: password
+            - name: ZMQ_BLK_ADDR
+              value: zcashd-service:9994
+            - name: ZMQ_LWD_ADDR
+              value: zcashd-service:28332
             - name: ZMQ_BLK_PORT
               value: "9994"
             - name: ZMQ_LWD_PORT
               value: "28332"
           ports:
-            - name: zcash-ui-port
+            - name: zcashd-ui-port
               containerPort: 3001
               protocol: TCP
-          volumeMounts:
-            - name: zcash-ui-data
-              mountPath: /home/zcash/.zcash
+#          volumeMounts:
+#            - name: zcash-ui-data
+#              mountPath: /home/zcash/.zcash
           securityContext:
             allowPrivilegeEscalation: false
-      volumes:
-        - name: zcash-ui-data
-          persistentVolumeClaim:
-            claimName: efs
-        - name: zcash-ui-params
-          persistentVolumeClaim:
-            claimName: efs
+#      volumes:
+#        - name: zcash-ui-data
+#          persistentVolumeClaim:
+#            claimName: efs
+#        - name: zcash-ui-params
+#          persistentVolumeClaim:
+#            claimName: efs

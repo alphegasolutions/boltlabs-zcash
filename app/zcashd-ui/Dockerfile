@@ -1,6 +1,6 @@
-ARG DOCKER_REPO=alphegasolutions
-ARG ZCASH_VERSION=v2.0.6
-FROM $DOCKER_REPO/zcashd:$ZCASH_VERSION AS builder
+ARG REPOSITORY_URI=boltlabs
+ARG ZCASH_VERSION=latest
+FROM $REPOSITORY_URI/zcashd:$ZCASH_VERSION AS builder
 
 FROM debian:jessie
 
@@ -15,7 +15,7 @@ RUN apt-get update \
     && apt-get install -y nodejs
 
 
-COPY --from=builder /usr/bin/zcash-cli usr/bin/zcash-tx /usr/bin/zcash-qtest /usr/bin/fetch-params.sh /usr/bin/
+COPY --from=builder /usr/bin/zcash-cli /usr/bin/
 
 RUN addgroup --gid 1000 --system zcash && adduser --uid 1000 --home /home/zcash --ingroup zcash --system zcash &&\
     mkdir -p /home/zcash/.npm-global &&\
@@ -32,8 +32,7 @@ RUN npm install -g npm@latest &&\
 WORKDIR /home/zcash/
 
 RUN bitcore-node create zc
-COPY --chown=zcash:zcash ./entrypoint.sh /home/zcash/zc/
-COPY --chown=zcash:zcash ./bitcore-spawn-node.json /home/zcash/zc/bitcore-node.json
+COPY --chown=zcash:zcash ./bitcore-node.json ./entrypoint.sh /home/zcash/zc/
 
 WORKDIR /home/zcash/zc
 RUN chmod u+x entrypoint.sh

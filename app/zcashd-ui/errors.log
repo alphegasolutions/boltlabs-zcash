@@ -1,0 +1,13 @@
+[2019-09-06T18:04:56.437Z] info: ::ffff:192.168.155.62 web socket subscribe: sync
+[2019-09-06T18:04:56.449Z] info: ::ffff:192.168.155.62 "GET /api/charts" 304 - 0.400 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36" 
+[2019-09-06T18:04:56.450Z] info: ::ffff:192.168.155.62 "GET /api/peer" 304 - 0.283 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36" 
+[2019-09-06T18:04:56.453Z] info: ::ffff:192.168.232.159 "GET /api/chart/block-size" 400 129 6.730 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36" 
+[2019-09-06T18:04:56.827Z] info: ::ffff:192.168.155.62 web socket subscribe: inv
+[2019-09-06T18:04:56.849Z] info: ::ffff:192.168.155.62 "GET /api/blocks?limit=5" 400 129 3.648 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36" 
+[2019-09-06T18:04:56.857Z] info: ::ffff:192.168.232.159 "GET /api/peer" 304 - 0.311 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36" 
+[2019-09-06T18:04:56.866Z] info: ::ffff:192.168.155.62 web socket subscribe: sync
+
+
+[2019-09-06T18:05:48.067Z] info: ::ffff:192.168.155.62 "GET /api/blocks" 400 129 1.881 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36" 
+[2019-09-06T18:05:48.136Z] info: ::ffff:192.168.155.62 web socket subscribe: sync
+[2019-09-06T18:05:48.145Z] info: ::ffff:192.168.232.159 "GET /api/peer" 304 - 0.297 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36" 
