@@ -68,7 +68,7 @@ spec:
       containers: 
         - name: zcashd          
           image: 183812568438.dkr.ecr.us-east-1.amazonaws.com/zcashd:v2.0.7
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: ZCASH_HOME
               value: /home/zcash
@@ -89,7 +89,7 @@ spec:
             - name: ZCASH_ZMQ2_PORT
               value: "28332"
             - name: ENABLE_INSIGHT_EXPLORER
-              value: true
+              value: "true"
           ports:
             - name: zcashd-rpc
               containerPort: 18232

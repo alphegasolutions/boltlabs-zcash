@@ -35,8 +35,8 @@ function create_conf_file() {
     echo "zmqpubcheckedblock=tcp://0.0.0.0:${ZCASH_ZMQ2_PORT}" >> ${ZCASH_CONF}
 
 #  add logic to add conditionally
-#    echo "reindex=1" >> ${ZCASH_CONF}
 
+    echo "reindex=1" >> ${ZCASH_CONF}
     echo "showmetrics=0" >> ${ZCASH_CONF}
     echo "txindex=1" >> ${ZCASH_CONF}
     echo "addressindex=1" >> ${ZCASH_CONF}

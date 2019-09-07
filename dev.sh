@@ -30,19 +30,19 @@ if [ -z $CMD ]; then
 	
 elif [ $CMD == "build" ]; then
 
-#	echo "Starting docker build for zcashd"	
-#	time bin/build_image.sh zcashd
+	echo "Starting docker build for zcashd"	
+	time bin/build_image.sh zcashd
 	
-#	echo "Starting docker build for zcash-ui"
-#	time bin/build_image.sh zcashd-ui
+	echo "Starting docker build for zcash-ui"
+	time bin/build_image.sh zcashd-ui
 	
 	echo "Starting docker build for zcash-lwd"
 	time bin/build_image.sh zcashd-lwd
 
 elif [ $CMD == "push" ]; then
 
-#	bin/push_image.sh zcashd
-#	bin/push_image.sh zcashd-ui
+	bin/push_image.sh zcashd
+	bin/push_image.sh zcashd-ui
 	bin/push_image.sh zcashd-lwd
 
 elif [ $CMD == "deploy" ]; then
